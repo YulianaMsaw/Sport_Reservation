@@ -1,32 +1,9 @@
-<script>
-export default {
-  name: 'LK',
-
-  computed: {
-    currentUser() {
-      return this.$store.state.auth.user
-    }
-  },
-
-  logout() {
-    this.$store.dispatch('userLogout').then(() => {
-      this.$router.push('/')
-    })
-  },
-
-  async mounted() {
-    if (!this.currentUser) {
-      this.$router.push('/signin')
-    }
-  }
-}
-</script>
 <script setup>
 import profile_desc from '../components/profile_desc.vue'
 import axios from 'axios'
 import { useStore } from 'vuex'
 import { useRouter } from 'vue-router'
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 import { onMounted } from 'vue'
 import abon_profile_brief_list from '../components/abon_profile_brief_list.vue'
 import abon_control from '../components/abon_control.vue'
@@ -34,23 +11,51 @@ import abon_control from '../components/abon_control.vue'
 const store = useStore()
 const router = useRouter()
 const userdata = ref([])
+const controldata = ref([])
 const userabons = ref([])
+const requestabons = ref([])
 const user = store.state.auth.user
 
+const getRequests = async () => {
+  try {
+    const { data } = await axios.post(
+      'http://127.0.0.1:8000/getRequestsAbons',
+      JSON.stringify(user),
+      {
+        headers: { 'Content-Type': 'application/json' }
+      }
+    )
+    requestabons.value = data
+  } catch (error) {
+    console.error(error)
+  }
+}
 const logout = () => {
   store.dispatch('auth/logout')
   router.push({ name: 'Home' })
 }
 
+const getControl = async () => {
+  try {
+    const { data } = await axios.post(
+      'http://127.0.0.1:8000/getControlData',
+      JSON.stringify(user),
+      {
+        headers: { 'Content-Type': 'application/json' }
+      }
+    )
+    controldata.value = data
+  } catch (error) {
+    console.error(error)
+  }
+}
 onMounted(async () => {
   if (!user) {
     router.push('/signin')
   } else {
-    console.log(JSON.stringify(user))
     user.accessToken = user.accessToken.toString()
     user.email = user.email.toString()
     user.password = user.password.toString()
-    console.log(JSON.stringify(user))
     try {
       const { data } = await axios.post('http://127.0.0.1:8000/getUserData', JSON.stringify(user), {
         headers: { 'Content-Type': 'application/json' }
@@ -59,15 +64,31 @@ onMounted(async () => {
     } catch (error) {
       console.error(error)
     }
+    getControl()
+    if (userdata.value.acctype === 'company') {
+    }
   }
   try {
     const { data } = await axios.post('http://127.0.0.1:8000/getUserAbons', JSON.stringify(user), {
       headers: { 'Content-Type': 'application/json' }
     })
     userabons.value = data
-    console.log(userabons.value[0])
   } catch (error) {
     console.error(error)
+  }
+})
+
+const controlStatus = ref('all')
+const queryAbons = computed(() => {
+  let p = userabons.value
+  if (controlStatus.value === 'all') {
+    return p
+  } else {
+    p = p.filter((item) => {
+      return item.status.indexOf(controlStatus.value) !== -1
+    })
+
+    return p
   }
 })
 </script>
@@ -92,9 +113,26 @@ onMounted(async () => {
     <div class="flex justify-between my-20">
       <div class="w-8/12">
         <h2 class="text-2xl text-slate-300 font-bold">Мои абонементы</h2>
-        <abon_profile_brief_list :items="userabons" :reserv="false" />
+        <abon_profile_brief_list @changeControl="getControl" :items="queryAbons" :reserv="false" />
+        <div v-if="userdata.acctype === 'company'">
+          <h2 class="text-2xl text-slate-300 font-bold">Мои абонементы</h2>
+          <abon_profile_brief_list
+            @changeControl="getControl"
+            :items="requestabons"
+            :reserv="false"
+          />
+        </div>
       </div>
-      <abon_control />
+      <abon_control
+        @all="queryAbons.value = 'all'"
+        @active="queryAbons.value = 'active'"
+        @freezed="queryAbons.value = 'freezed'"
+        @ended="queryAbons.value = 'ended'"
+        :all="controldata.allcount"
+        :active="controldata.activecount"
+        :freezed="controldata.freezedcount"
+        :ended="controldata.endedcount"
+      />
     </div>
   </div>
 </template>

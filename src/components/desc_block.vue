@@ -1,3 +1,7 @@
+<script setup>
+import { useRouter } from 'vue-router'
+const router = useRouter()
+</script>
 <template>
   <div class="w-4/5 flex justify-between m-auto">
     <div class="w-1/3 pt-10 pb-20">
@@ -11,6 +15,7 @@
           <RouterLink to="/lk"> Личный кабинет </RouterLink>
         </button>
         <button
+          @click="router.push({ name: 'Search', query: { search: '' } })"
           class="w-2/5 border-solid border-2 border-black rounded-xl text-black p-3 font-bold"
         >
           Поиск

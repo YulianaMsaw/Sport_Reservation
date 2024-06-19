@@ -5,6 +5,8 @@ const props = defineProps({
   items: Array,
   reserv: Boolean
 })
+
+const emit = defineEmits(['changeControl'])
 </script>
 
 <template>
@@ -23,10 +25,5 @@ const props = defineProps({
       :price="item.price"
       :reserv="props.reserv"
     />
-  </div>
-  <div class="flex bg-white w-24 rounded-2xl p-3 my-20 shadow-xl mx-auto">
-    <button class="text-slate-600 w-1/2">&#8592;</button>
-    <span class="text-slate-300">&#448;</span>
-    <button class="text-black w-1/2">&#8594;</button>
   </div>
 </template>

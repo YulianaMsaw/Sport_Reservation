@@ -1,9 +1,24 @@
 <script setup>
 import abon_profile_brief from './abon_profile_brief.vue'
+import { ref } from 'vue'
 
-defineProps({
+const props = defineProps({
   items: Array
 })
+const ObjectsOnPage = 4
+const CurrentPage = ref(0)
+const CountPages = props.items.length
+
+const NextPage = () => {
+  if (CurrentPage.value < CountPages - 1) {
+    CurrentPage.value++
+  }
+}
+const PrevPage = () => {
+  if (CurrentPage.value > 0) {
+    CurrentPage.value--
+  }
+}
 </script>
 
 <template>
@@ -22,9 +37,9 @@ defineProps({
       />
     </div>
     <div class="flex bg-white w-24 rounded-2xl p-3 my-20 shadow-xl mx-auto">
-      <button class="text-slate-600 w-1/2">&#8592;</button>
+      <button @click="PrevPage" class="text-slate-600 w-1/2">&#8592;</button>
       <span class="text-slate-300">&#448;</span>
-      <button class="text-black w-1/2">&#8594;</button>
+      <button @click="NextPage" class="text-black w-1/2">&#8594;</button>
     </div>
   </div>
 </template>

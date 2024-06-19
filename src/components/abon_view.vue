@@ -20,10 +20,12 @@ const show = ref([])
 const linkOpenComplex = ref([])
 const linkOpenTrainer = ref([])
 const abonstatus = ref([])
+const reservStatus = ref([])
 abonstatus.value = props.status
-const emit = defineEmits(['closeabonview'])
+const emit = defineEmits(['closeabonview', 'active', 'freeze', 'canceled'])
 const closeModal = () => {
   emit('closeabonview')
+  reservStatus.value = false
 }
 
 const ReservAbon = () => {
@@ -32,7 +34,7 @@ const ReservAbon = () => {
       'http://127.0.0.1:8000/reservabon',
       JSON.stringify({
         accessToken: user.accessToken.toString(),
-        phone: user.phone.toString(),
+        email: user.email.toString(),
         password: user.password.toString(),
         id: idabon
       }),
@@ -40,6 +42,7 @@ const ReservAbon = () => {
         headers: { 'Content-Type': 'application/json' }
       }
     )
+    reservStatus.value = true
   } catch (error) {
     console.error(error)
   }
@@ -51,7 +54,7 @@ const FreezeAbon = async () => {
       'http://127.0.0.1:8000/freezeabon',
       JSON.stringify({
         accessToken: user.accessToken.toString(),
-        phone: user.phone.toString(),
+        email: user.email.toString(),
         password: user.password.toString(),
         id: idabon
       }),
@@ -60,6 +63,7 @@ const FreezeAbon = async () => {
       }
     )
     abonstatus.value = 'freezed'
+    emit('freeze')
   } catch (error) {
     console.error(error)
   }
@@ -67,12 +71,11 @@ const FreezeAbon = async () => {
 
 const UnFreezeAbon = () => {
   try {
-    console.log(idabon)
     const { data } = axios.post(
       'http://127.0.0.1:8000/unfreezeabon',
       JSON.stringify({
         accessToken: user.accessToken.toString(),
-        phone: user.phone.toString(),
+        email: user.email.toString(),
         password: user.password.toString(),
         id: idabon
       }),
@@ -81,6 +84,7 @@ const UnFreezeAbon = () => {
       }
     )
     abonstatus.value = 'active'
+    emit('active')
   } catch (error) {
     console.error(error)
   }
@@ -88,12 +92,11 @@ const UnFreezeAbon = () => {
 
 const ExtendAbon = () => {
   try {
-    console.log(idabon)
     const { data } = axios.post(
       'http://127.0.0.1:8000/extendabon',
       JSON.stringify({
         accessToken: user.accessToken.toString(),
-        phone: user.phone.toString(),
+        email: user.email.toString(),
         password: user.password.toString(),
         id: idabon
       }),
@@ -102,11 +105,34 @@ const ExtendAbon = () => {
       }
     )
     abonstatus.value = 'active'
+    emit('active')
+  } catch (error) {
+    console.error(error)
+  }
+}
+
+const CancelAbon = async () => {
+  try {
+    const { data } = axios.post(
+      'http://127.0.0.1:8000/cancelabon',
+      JSON.stringify({
+        accessToken: user.accessToken.toString(),
+        email: user.email.toString(),
+        password: user.password.toString(),
+        id: idabon
+      }),
+      {
+        headers: { 'Content-Type': 'application/json' }
+      }
+    )
+    abonstatus.value = 'canceled'
+    emit('canceled')
   } catch (error) {
     console.error(error)
   }
 }
 onMounted(async () => {
+  reservStatus.value = false
   try {
     const { data } = await axios.post(
       'http://127.0.0.1:8000/getAbonData',
@@ -193,6 +219,7 @@ onMounted(async () => {
                 Заморозить
               </button>
               <button
+                @click="CancelAbon"
                 class="w-full bg-black text-white rounded-xl font-bold my-5 p-3 hover:-translate-y-2 hover:shadow-3xl transition"
               >
                 Отменить
@@ -211,6 +238,7 @@ onMounted(async () => {
                 Разморозить
               </button>
               <button
+                @click="CancelAbon"
                 class="w-full bg-black text-white rounded-xl font-bold my-5 p-3 hover:-translate-y-2 hover:shadow-3xl transition"
               >
                 Отменить
@@ -223,6 +251,7 @@ onMounted(async () => {
                 <p class="text-xl text-white font-bold m-3 text-center">В ожидании</p>
               </div>
               <button
+                @click="CancelAbon"
                 class="w-full bg-black text-white rounded-xl font-bold my-5 p-3 hover:-translate-y-2 hover:shadow-3xl transition"
               >
                 Отменить
@@ -246,14 +275,33 @@ onMounted(async () => {
                 Удалить
               </button>
             </div>
+            <div v-if="abonstatus == 'canceled'">
+              <div
+                class="w-full bg-red-700 rounded-xl text-white p-3 font-bold my-5 hover:-translate-y-2 hover:shadow-3xl transition"
+              >
+                <p class="text-xl text-white font-bold m-3 text-center">Отменен</p>
+              </div>
+            </div>
           </div>
-          <button
-            @click="ReservAbon"
-            v-if="props.reserv"
-            class="w-full bg-black rounded-xl text-white p-3 font-bold my-5 cursor-pointer hover:-translate-y-2 hover:shadow-3xl transition"
-          >
-            Записаться
-          </button>
+          <div v-if="store.state.auth.status.loggedIn">
+            <div v-if="!reservStatus">
+              <button
+                @click="ReservAbon"
+                v-if="props.reserv"
+                class="w-full bg-black rounded-xl text-white p-3 font-bold my-5 cursor-pointer hover:-translate-y-2 hover:shadow-3xl transition"
+              >
+                Записаться
+              </button>
+            </div>
+            <div v-else>
+              <p class="text-2xl text-black font-bold m-3 underline text-center">
+                Вы успешно записались
+              </p>
+            </div>
+          </div>
+          <div v-else class="text-center my-10">
+            <p>Для записи необходимо авторизоваться!</p>
+          </div>
         </div>
         <div class="w-2/5">
           <div>
@@ -264,10 +312,10 @@ onMounted(async () => {
           </div>
           <div>
             <p class="text-2xl text-black font-bold m-3 underline text-center">
-              Спортиный Комплекс
+              Спортивный Комплекс
             </p>
-            <RouterLink :to="linkOpenComplex"
-              ><div
+            <RouterLink :to="linkOpenComplex">
+              <div
                 class="flex gap-5 justify-center items-center my-5 bg-white shadow-lg border-slate-100 rounded-2xl cursor-pointer hover:-translate-y-2 hover:shadow-3xl transition p-5"
               >
                 <img

@@ -16,7 +16,7 @@ const linkOpen = `/trainer/${props.id}`
   <div>
     <RouterLink :to="linkOpen">
       <div
-        class="text-center relative bg-white shadow-lg w-56 relative border-slate-100 rounded-2xl p-3 cursor-pointer hover:-translate-y-2 hover:shadow-3xl transition"
+        class="align-self: stretch text-center relative bg-white shadow-lg w-56 h-64 relative border-slate-100 rounded-2xl p-3 cursor-pointer hover:-translate-y-2 hover:shadow-3xl transition"
       >
         <div class="relative text-center flex justify-center items-center">
           <img

@@ -10,7 +10,6 @@ const user = store.state.auth.user
 
 const ReservAbon = () => {
   try {
-    console.log(idabon)
     const { data } = axios.post(
       'http://127.0.0.1:8000/reservabon',
       JSON.stringify({
@@ -23,6 +22,7 @@ const ReservAbon = () => {
         headers: { 'Content-Type': 'application/json' }
       }
     )
+    reservStatus.value = true
   } catch (error) {
     console.error(error)
   }
@@ -30,13 +30,15 @@ const ReservAbon = () => {
 
 const trainerdata = ref([])
 const complexdata = ref([])
+const reservStatus = ref([])
+
 onMounted(async () => {
+  abonStatus.value = props.status
   user.accessToken = user.accessToken.toString()
   user.email = user.email.toString()
   user.password = user.password.toString()
-
+  reservStatus.value = false
   try {
-    console.log(props.id.toString())
     const { data } = await axios.post(
       'http://127.0.0.1:8000/getTrainerFullNameById',
       JSON.stringify({ id: props.trainer }),
@@ -45,14 +47,11 @@ onMounted(async () => {
       }
     )
     trainerdata.value = data
-    console.log('4365464654654645654')
-    console.log(props.reserv)
   } catch (error) {
     console.error(error)
   }
 
   try {
-    console.log(props.id.toString())
     const { data } = await axios.post(
       'http://127.0.0.1:8000/getComplexFullNameById',
       JSON.stringify({ id: props.complex }),
@@ -61,8 +60,6 @@ onMounted(async () => {
       }
     )
     complexdata.value = data
-    console.log('4365464654654645654')
-    console.log(props.reserv)
   } catch (error) {
     console.error(error)
   }
@@ -83,24 +80,34 @@ const props = defineProps({
   reserv: Boolean,
   complex: String
 })
+
 const idabon = props.id
 const reserv = props.reserv
+const abonStatus = ref([])
 </script>
 
 <template>
   <abon_view
     :id="id"
-    :status="status"
     v-if="ShowModal"
     @closeabonview="ShowModal = !ShowModal"
+    @active="abonStatus = 'active'"
+    @freeze="abonStatus = 'freezed'"
+    @canceled="abonStatus = 'canceled'"
+    :status="abonStatus"
     :reserv="reserv"
   />
   <div>
     <div
-      @click="(ShowModal = !ShowModal), console.log(ShowModal)"
+      @click.self="ShowModal = !ShowModal"
       class="h-88 bg-white shadow-lg w-56 relative border-slate-100 rounded-2xl p-3 cursor-pointer hover:-translate-y-2 hover:shadow-3xl transition"
     >
-      <img :src="imageURL" alt="abon_pic" class="rounded-2xl object-fill aspect-square" />
+      <img
+        @click.self="ShowModal = !ShowModal"
+        :src="imageURL"
+        alt="abon_pic"
+        class="rounded-2xl object-fill aspect-square w-48 h-48 m-auto"
+      />
       <div class="my-2 flex gap-5 items-center">
         <p class="text-left text-bold font-sans">
           {{ trainerdata.name }} {{ trainerdata.surname }}
@@ -110,28 +117,34 @@ const reserv = props.reserv
         <p class="mt-1 text-left font-bold font-sans justify-self-end">{{ name }}</p>
         <div v-if="!props.reserv">
           <div
-            v-if="status == 'active'"
+            v-if="abonStatus == 'active'"
             class="w-1/2 bg-lime-500 rounded-xl text-sm text-white p-1 font-bold my-1 hover:-translate-y-2 hover:shadow-3xl transition"
           >
             <p class="text-sm text-white font-bold m-1 text-center">Активен</p>
           </div>
           <div
-            v-if="status == 'freezed'"
+            v-if="abonStatus == 'freezed'"
             class="w-2/3 bg-cyan-500 rounded-xl text-sm text-white p-1 font-bold my-1 hover:-translate-y-2 hover:shadow-3xl transition"
           >
             <p class="text-sm text-white font-bold m-1 text-center">Заморожен</p>
           </div>
           <div
-            v-if="status == 'wait'"
+            v-if="abonStatus == 'wait'"
             class="w-2/3 bg-amber-600 rounded-xl text-sm text-white p-1 font-bold my-1 hover:-translate-y-2 hover:shadow-3xl transition"
           >
             <p class="text-sm text-white font-bold m-1 text-center">В ожидании</p>
           </div>
           <div
-            v-if="status == 'ended'"
+            v-if="abonStatus == 'ended'"
             class="w-1/2 bg-rose-800 rounded-xl text-sm text-white p-1 font-bold my-1 hover:-translate-y-2 hover:shadow-3xl transition"
           >
             <p class="text-sm text-white font-bold m-1 text-center">Истек</p>
+          </div>
+          <div
+            v-if="abonStatus == 'canceled'"
+            class="w-1/2 bg-red-700 rounded-xl text-sm text-white p-1 font-bold my-1 hover:-translate-y-2 hover:shadow-3xl transition"
+          >
+            <p class="text-sm text-white font-bold m-1 text-center">Отменен</p>
           </div>
         </div>
         <div v-if="props.reserv">
@@ -147,12 +160,19 @@ const reserv = props.reserv
               <p class="text-xs">{{ price }} руб.</p>
             </div>
           </div>
-          <button
-            @click="ReservAbon"
-            class="w-full bg-black rounded-xl text-white p-1 font-bold my-1 cursor-pointer hover:-translate-y-2 hover:shadow-3xl transition"
-          >
-            Записаться
-          </button>
+          <div v-if="store.state.auth.status.loggedIn">
+            <div v-if="!reservStatus">
+              <button
+                @click="ReservAbon"
+                class="z-10 w-full bg-black rounded-xl text-white p-1 font-bold my-3 cursor-pointer hover:-translate-y-2 hover:shadow-3xl transition"
+              >
+                Записаться
+              </button>
+            </div>
+            <div v-else class="text-center">
+              <p>Вы успешно записались!</p>
+            </div>
+          </div>
         </div>
       </div>
     </div>

@@ -1,6 +1,7 @@
 <script setup>
 import com_desc from '../components/com_desc.vue'
 import abon_profile_brief_list from '../components/abon_profile_brief_list.vue'
+import review_list from '../components/review_list.vue'
 import { onMounted } from 'vue'
 import axios from 'axios'
 import { useRouter } from 'vue-router'
@@ -9,12 +10,12 @@ import { ref } from 'vue'
 
 const complexdata = ref([])
 const complexabons = ref([])
+const complexreviews = ref([])
 const route = useRoute()
 const router = useRouter()
 
 onMounted(async () => {
   try {
-    console.log(route.params.id.toString())
     const { data } = await axios.post(
       'http://127.0.0.1:8000/getComplexData',
       JSON.stringify({ id: route.params.id.toString() }),
@@ -23,7 +24,6 @@ onMounted(async () => {
       }
     )
     complexdata.value = data
-    console.log(complexdata.value)
   } catch (error) {
     console.error(error)
   }
@@ -36,7 +36,19 @@ onMounted(async () => {
       }
     )
     complexabons.value = data
-    console.log(complexabons.value)
+  } catch (error) {
+    console.error(error)
+  }
+  try {
+    const { data } = await axios.post(
+      'http://127.0.0.1:8000/getComplexReviews',
+      JSON.stringify({ id: route.params.id.toString() }),
+      {
+        headers: { 'Content-Type': 'application/json' }
+      }
+    )
+    complexreviews.value = data
+    console.log(complexreviews.value)
   } catch (error) {
     console.error(error)
   }
@@ -56,11 +68,14 @@ onMounted(async () => {
       :desc="complexdata.desc"
       :shortdesc="complexdata.shortdesc"
     />
-    <div class="w-full my-20">
-      <img src="/coms/map.png" alt="" />
+    <div class="w-full m-auto">
+      <img src="/coms/map.png" alt="map" />
     </div>
     <div class="my-20 w-full">
       <abon_profile_brief_list :items="complexabons" :reserv="true" />
     </div>
+  </div>
+  <div class="bg-slate-100">
+    <review_list :items="complexreviews" type="complex" :id="route.params.id" />
   </div>
 </template>

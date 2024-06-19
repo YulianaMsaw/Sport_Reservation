@@ -59,13 +59,7 @@ export default {
           name="password"
           placeholder="Пароль"
         />
-        <select
-          class="shadow-xl w-full h-12 my-5 text-sm text-bold border-none rounded-md text-slate-400 p-3 text-left"
-        >
-          <option>Пользователь</option>
-          <option>Компания</option>
-          <option>Тренер</option>
-        </select>
+
         <button
           v-on:click="
             handleLogin({

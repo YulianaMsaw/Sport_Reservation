@@ -1,7 +1,7 @@
 <script setup>
-import editprofile from '../components/editprofile.vue'
+import profile_edit from '../components/profile_edit.vue'
 </script>
 
 <template>
-  <editprofile />
+  <profile_edit />
 </template>

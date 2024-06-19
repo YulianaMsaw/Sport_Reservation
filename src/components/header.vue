@@ -1,11 +1,16 @@
 <script setup>
 import { useStore } from 'vuex'
 import { useRouter } from 'vue-router'
+import { ref } from 'vue'
+const searchquery = ref('')
 const store = useStore()
 const router = useRouter()
 const logout = () => {
   store.dispatch('auth/logout')
   router.push({ name: 'Home' })
+}
+const search = () => {
+  router.push({ name: 'Search', query: { search: searchquery.value } })
 }
 </script>
 <template>
@@ -16,11 +21,18 @@ const logout = () => {
       </div>
 
       <div class="w-full flex gap-10 uppercase text-bold items-center relative">
-        <img src="/search.png" alt="search" class="absolute wh-5 left-3 top-3" />
+        <img
+          @click="search"
+          src="/search.png"
+          alt="search"
+          class="absolute wh-5 left-3 top-3 hover:cursor-pointer"
+        />
         <input
-          class="w-4/5 h-12 text-sm bg-gray-100 rounded-xl text-slate-200 p-3 text-center"
+          v-model="searchquery"
+          @keyup.enter="search"
+          class="w-4/5 h-12 text-sm bg-gray-100 rounded-xl p-3 text-center text-black"
           name="search"
-          placeholder="Поиск комплексов"
+          placeholder="Поиск"
         />
 
         <button

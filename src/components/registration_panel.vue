@@ -12,7 +12,7 @@ export default {
   },
 
   data() {
-    const ConfCode = '12'
+    const ConfCode = ''
     const schema = yup.object().shape({
       email: yup.string().required('Необходимо заполнить почту!').email('Неверный формат почты!'),
       password: yup
@@ -24,7 +24,10 @@ export default {
         .string()
         .required()
         .oneOf([yup.ref('password')], 'Пароли не совпадают!'),
-      ConfirmationCode: yup.string().required().oneOf([ConfCode], 'Неверный код подтверждения!')
+      ConfirmationCode: yup
+        .string()
+        .required('Необходимо ввести код подтверждения!')
+        .oneOf([ConfCode], 'Неверный код подтверждения!')
     })
 
     return {
@@ -47,44 +50,24 @@ export default {
   },
   methods: {
     async sendCode() {
-      try {
-        const data = await axios.get('http://127.0.0.1:8000/sendcode').then((response) => {
-          this.$data.schema.fields.ConfirmationCode = yup
-            .string()
-            .required()
-            .oneOf([response.data.code], 'Неверный код подтверждения!')
-        })
-      } catch (error) {
-        console.error(error)
-      }
-    },
-    async checkemail() {
-      try {
-        console.log({ login: this.email, password: this.password })
-        const { data } = await axios.patch(
-          'http://localhost:3000/auth/registration',
-          JSON.stringify({ login: this.email, password: this.password }),
-          {
-            headers: { 'Content-Type': 'application/json' }
-          }
-        )
-        console.log(data)
-      } catch (error) {
-        console.error(error)
-      }
-    },
-    registrate() {
-      try {
-        const { data } = axios.post(
-          'http://localhost:3000/auth/registration',
-          JSON.stringify({ login: this.email, code: this.ConfirmationCode }),
-          {
-            headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' }
-          }
-        )
-        console.log(data)
-      } catch (error) {
-        console.error(error)
+      if (this.email !== '' && this.email) {
+        try {
+          const data = await axios
+            .post('http://127.0.0.1:8000/sendcode', JSON.stringify({ email: this.email }), {
+              headers: { 'Content-Type': 'application/json' }
+            })
+            .then((response) => {
+              this.$data.schema.fields.ConfirmationCode = yup
+                .string()
+                .required('Необходимо ввести код подтверждения!')
+                .oneOf([response.data.code], 'Неверный код подтверждения!')
+            })
+        } catch (error) {
+          console.error(error)
+        }
+      } else {
+        const input = document.getElementById('user.email')
+        input.focus()
       }
     },
     handleRegister(user) {
@@ -94,9 +77,21 @@ export default {
 
       this.$store.dispatch('auth/register', user).then(
         (data) => {
-          this.message = data.message
           this.successful = true
           this.loading = false
+        },
+        (error) => {
+          this.message =
+            (error.response && error.response.data && error.response.data.message) ||
+            error.message ||
+            error.toString()
+          this.successful = false
+          this.loading = false
+        }
+      )
+      this.$store.dispatch('auth/login', user).then(
+        (data) => {
+          this.$router.push('/lk')
         },
         (error) => {
           this.message =
@@ -131,7 +126,6 @@ export default {
               />
             </div>
             <ErrorMessage as="div" name="email" v-slot="{ message }">
-              <p>Error:</p>
               <p>{{ message }}</p>
             </ErrorMessage>
             <div class="form-group">
@@ -153,7 +147,6 @@ export default {
               />
             </div>
             <ErrorMessage as="div" name="passwordConfirmation" v-slot="{ message }">
-              <p>Error:</p>
               <p>{{ message }}</p>
             </ErrorMessage>
             <div class="form-group flex gap-3 items-center">
@@ -166,25 +159,25 @@ export default {
               <button
                 type="button"
                 class="w-1/4 bg-black rounded-xl text-white p-1 font-bold h-12"
-                @click="checkemail"
+                @click="sendCode"
               >
                 <p class="text-white text-xs">Отправить</p>
               </button>
             </div>
             <ErrorMessage as="div" name="ConfirmationCode" v-slot="{ message }">
-              <p>Error:</p>
               <p>{{ message }}</p>
             </ErrorMessage>
-            <select
-              class="shadow-xl w-full h-12 my-5 text-sm text-bold border-none rounded-md text-slate-400 p-3 text-left"
-            >
-              <option>Пользователь</option>
-              <option>Компания</option>
-            </select>
+
             <div class="form-group">
               <button
                 type="submit"
-                v-on:click="registrate"
+                v-on:click="
+                  handleRegister({
+                    email: this.email,
+                    password: this.password,
+                    acc_type: this.acc_type
+                  })
+                "
                 class="my-5 btn-primary w-full bg-black rounded-xl text-white p-3 font-bold"
                 :disabled="loading"
               >
